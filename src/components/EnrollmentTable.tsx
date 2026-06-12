@@ -1,25 +1,24 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Enrollment } from '../types/enrollment';
-import type { Student } from '../types/student';
-import type { Course } from '../types/course';
+import { useStudentStore } from '../store/studentStore';
+import { useCourseStore } from '../store/courseStore';
 
 interface EnrollmentTableProps {
   enrollments: Enrollment[];
-  students: Student[];
-  courses: Course[];
   onEdit: (enrollment: Enrollment) => void;
   onStop: (id: string) => void;
 }
 
 const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ 
   enrollments, 
-  students, 
-  courses, 
   onEdit, 
   onStop 
 }) => {
   const { t } = useTranslation();
+  const { students } = useStudentStore();
+  const { courses } = useCourseStore();
+
   const getStudentName = (id: string) => students.find(s => s.id === id)?.fullName || 'Unknown Student';
   const getCourseName = (id: string) => courses.find(c => c.id === id)?.courseName || 'Unknown Course';
 

@@ -3,35 +3,25 @@ import { useTranslation } from 'react-i18next';
 import type { Student, StudentInput } from '../types/student';
 import StudentForm from '../components/StudentForm';
 import StudentTable from '../components/StudentTable';
+import { useStudentStore } from '../store/studentStore';
 
-interface StudentsProps {
-  students: Student[];
-  setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
-}
-
-const Students: React.FC<StudentsProps> = ({ students, setStudents }) => {
+const Students: React.FC = () => {
   const { t } = useTranslation();
+  const { students, addStudent, updateStudent, deleteStudent } = useStudentStore();
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const handleAddOrUpdate = (input: StudentInput) => {
     if (editingStudent) {
-      setStudents((prev) =>
-        prev.map((s) => (s.id === editingStudent.id ? { ...s, ...input } : s))
-      );
+      updateStudent(editingStudent.id, input);
       setEditingStudent(null);
     } else {
-      const newStudent: Student = {
-        ...input,
-        id: 's' + Math.random().toString(36).substr(2, 5),
-        createdDate: new Date().toISOString().split('T')[0],
-      };
-      setStudents((prev) => [newStudent, ...prev]);
+      addStudent(input);
     }
   };
 
   const handleDelete = (id: string) => {
     if (confirm(t('common.confirm_delete'))) {
-      setStudents((prev) => prev.filter((s) => s.id !== id));
+      deleteStudent(id);
     }
   };
 

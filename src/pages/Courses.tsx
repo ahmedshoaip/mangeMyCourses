@@ -3,14 +3,11 @@ import { useTranslation } from 'react-i18next';
 import type { Course, CourseInput, CourseStatus } from '../types/course';
 import CourseForm from '../components/CourseForm';
 import CourseTable from '../components/CourseTable';
+import { useCourseStore } from '../store/courseStore';
 
-interface CoursesProps {
-  courses: Course[];
-  setCourses: React.Dispatch<React.SetStateAction<Course[]>>;
-}
-
-const Courses: React.FC<CoursesProps> = ({ courses, setCourses }) => {
+const Courses: React.FC = () => {
   const { t } = useTranslation();
+  const { courses, addCourse, updateCourse, deleteCourse } = useCourseStore();
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | CourseStatus>('All');
@@ -26,23 +23,16 @@ const Courses: React.FC<CoursesProps> = ({ courses, setCourses }) => {
 
   const handleAddOrUpdate = (input: CourseInput) => {
     if (editingCourse) {
-      setCourses((prev) =>
-        prev.map((c) => (c.id === editingCourse.id ? { ...c, ...input } : c))
-      );
+      updateCourse(editingCourse.id, input);
       setEditingCourse(null);
     } else {
-      const newCourse: Course = {
-        ...input,
-        id: 'c' + Math.random().toString(36).substr(2, 5),
-        createdDate: new Date().toISOString().split('T')[0],
-      };
-      setCourses((prev) => [newCourse, ...prev]);
+      addCourse(input);
     }
   };
 
   const handleDelete = (id: string) => {
     if (confirm(t('common.confirm_delete'))) {
-      setCourses((prev) => prev.filter((c) => c.id !== id));
+      deleteCourse(id);
     }
   };
 
@@ -88,10 +78,10 @@ const Courses: React.FC<CoursesProps> = ({ courses, setCourses }) => {
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('common.filter')}:</label>
             <div className="flex p-1 bg-gray-100 dark:bg-gray-900 rounded-lg">
-              {['All', 'Active', 'Inactive'].map((status) => (
+              {(['All', 'Active', 'Inactive'] as const).map((status) => (
                 <button
                   key={status}
-                  onClick={() => setStatusFilter(status as any)}
+                  onClick={() => setStatusFilter(status)}
                   className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${
                     statusFilter === status
                       ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'

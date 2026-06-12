@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EnrollmentInput, Enrollment } from '../types/enrollment';
-import type { Student } from '../types/student';
-import type { Course } from '../types/course';
+import { useStudentStore } from '../store/studentStore';
+import { useCourseStore } from '../store/courseStore';
 
 interface EnrollmentFormProps {
   onSubmit: (enrollment: EnrollmentInput) => void;
   editingEnrollment: Enrollment | null;
   onCancel: () => void;
-  students: Student[];
-  courses: Course[];
 }
 
 const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ 
   onSubmit, 
   editingEnrollment, 
-  onCancel,
-  students,
-  courses
+  onCancel
 }) => {
   const { t } = useTranslation();
+  const { students } = useStudentStore();
+  const { courses } = useCourseStore();
+
   const [formData, setFormData] = useState<EnrollmentInput>({
     studentId: '',
     courseId: '',

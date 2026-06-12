@@ -1,25 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Enrollment, EnrollmentInput, EnrollmentStatus } from '../types/enrollment';
-import type { Student } from '../types/student';
-import type { Course } from '../types/course';
 import EnrollmentForm from '../components/EnrollmentForm';
 import EnrollmentTable from '../components/EnrollmentTable';
+import { useEnrollmentStore } from '../store/enrollmentStore';
+import { useStudentStore } from '../store/studentStore';
+import { useCourseStore } from '../store/courseStore';
 
-interface EnrollmentsProps {
-  enrollments: Enrollment[];
-  setEnrollments: React.Dispatch<React.SetStateAction<Enrollment[]>>;
-  students: Student[];
-  courses: Course[];
-}
-
-const Enrollments: React.FC<EnrollmentsProps> = ({ 
-  enrollments, 
-  setEnrollments,
-  students,
-  courses
-}) => {
+const Enrollments: React.FC = () => {
   const { t } = useTranslation();
+  const { enrollments, addEnrollment, updateEnrollment } = useEnrollmentStore();
+  const { students } = useStudentStore();
+  const { courses } = useCourseStore();
+  
   const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(null);
   
   // Filters State
@@ -39,24 +32,16 @@ const Enrollments: React.FC<EnrollmentsProps> = ({
 
   const handleAddOrUpdate = (input: EnrollmentInput) => {
     if (editingEnrollment) {
-      setEnrollments((prev) =>
-        prev.map((e) => (e.id === editingEnrollment.id ? { ...e, ...input } : e))
-      );
+      updateEnrollment(editingEnrollment.id, input);
       setEditingEnrollment(null);
     } else {
-      const newEnrollment: Enrollment = {
-        ...input,
-        id: 'e' + Math.random().toString(36).substr(2, 5),
-      };
-      setEnrollments((prev) => [newEnrollment, ...prev]);
+      addEnrollment(input);
     }
   };
 
   const handleStop = (id: string) => {
     if (confirm(t('common.confirm_stop'))) {
-      setEnrollments((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, status: 'Stopped' } : e))
-      );
+      updateEnrollment(id, { status: 'Stopped' });
     }
   };
 
@@ -77,8 +62,6 @@ const Enrollments: React.FC<EnrollmentsProps> = ({
           onSubmit={handleAddOrUpdate}
           editingEnrollment={editingEnrollment}
           onCancel={() => setEditingEnrollment(null)}
-          students={students}
-          courses={courses}
         />
       </div>
 
@@ -118,10 +101,10 @@ const Enrollments: React.FC<EnrollmentsProps> = ({
           <div className="space-y-2">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('common.status')}</label>
             <div className="flex p-1 bg-gray-100 dark:bg-gray-900 rounded-lg">
-              {['All', 'Active', 'Stopped'].map((status) => (
+              {(['All', 'Active', 'Stopped'] as const).map((status) => (
                 <button
                   key={status}
-                  onClick={() => setStatusFilter(status as any)}
+                  onClick={() => setStatusFilter(status)}
                   className={`flex-1 px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${
                     statusFilter === status
                       ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
@@ -146,8 +129,6 @@ const Enrollments: React.FC<EnrollmentsProps> = ({
           </div>
           <EnrollmentTable
             enrollments={filteredEnrollments}
-            students={students}
-            courses={courses}
             onEdit={handleEdit}
             onStop={handleStop}
           />

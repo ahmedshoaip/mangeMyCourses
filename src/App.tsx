@@ -3,65 +3,13 @@ import { useTranslation } from 'react-i18next';
 import Students from './pages/Students';
 import Courses from './pages/Courses';
 import Enrollments from './pages/Enrollments';
-import type { Student } from './types/student';
-import type { Course } from './types/course';
-import type { Enrollment } from './types/enrollment';
 
 type Module = 'Students' | 'Courses' | 'Enrollments';
-
-const initialStudents: Student[] = [
-  {
-    id: 's1',
-    fullName: 'Ahmed Mohamed',
-    phoneNumber: '01001234567',
-    parentPhoneNumber: '01229876543',
-    notes: 'Needs extra help with math.',
-    createdDate: '2026-06-05',
-  },
-  {
-    id: 's2',
-    fullName: 'Sara Ali',
-    phoneNumber: '01112334455',
-    parentPhoneNumber: '01556677889',
-    notes: 'Excellent student.',
-    createdDate: '2026-06-08',
-  },
-];
-
-const initialCourses: Course[] = [
-  {
-    id: 'c1',
-    courseName: 'Advanced React 19',
-    monthlyPrice: 150,
-    daysOfWeek: ['Mon', 'Wed', 'Fri'],
-    startTime: '18:00',
-    endTime: '20:00',
-    description: 'Deep dive into React 19 features.',
-    status: 'Active',
-    createdDate: '2026-05-15',
-  },
-  {
-    id: 'c2',
-    courseName: 'Fullstack JavaScript',
-    monthlyPrice: 200,
-    daysOfWeek: ['Tue', 'Thu'],
-    startTime: '10:00',
-    endTime: '13:00',
-    description: 'Master Node.js and Express.',
-    status: 'Active',
-    createdDate: '2026-06-01',
-  },
-];
 
 function App() {
   const { t, i18n } = useTranslation();
   const [activeModule, setActiveModule] = useState<Module>('Students');
   
-  // Lifted State
-  const [students, setStudents] = useState<Student[]>(initialStudents);
-  const [courses, setCourses] = useState<Course[]>(initialCourses);
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
-
   const toggleLanguage = () => {
     const nextLng = i18n.language === 'en' ? 'ar' : 'en';
     i18n.changeLanguage(nextLng);
@@ -131,18 +79,13 @@ function App() {
 
       <main className="flex-grow">
         {activeModule === 'Students' && (
-          <Students students={students} setStudents={setStudents} />
+          <Students />
         )}
         {activeModule === 'Courses' && (
-          <Courses courses={courses} setCourses={setCourses} />
+          <Courses />
         )}
         {activeModule === 'Enrollments' && (
-          <Enrollments 
-            enrollments={enrollments} 
-            setEnrollments={setEnrollments}
-            students={students}
-            courses={courses}
-          />
+          <Enrollments />
         )}
       </main>
 
