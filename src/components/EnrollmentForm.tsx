@@ -10,19 +10,18 @@ interface EnrollmentFormProps {
   onCancel: () => void;
 }
 
-const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ 
-  onSubmit, 
-  editingEnrollment, 
+const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
+  onSubmit,
+  editingEnrollment,
   onCancel
 }) => {
   const { t } = useTranslation();
-  const { students } = useStudentStore();
-  const { courses } = useCourseStore();
+  const students = useStudentStore((state) => state.students);
+  const courses = useCourseStore((state) => state.courses);
 
   const [formData, setFormData] = useState<EnrollmentInput>({
     studentId: '',
     courseId: '',
-    joinDate: new Date().toISOString().split('T')[0],
     status: 'Active',
   });
 
@@ -31,14 +30,12 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
       setFormData({
         studentId: editingEnrollment.studentId,
         courseId: editingEnrollment.courseId,
-        joinDate: editingEnrollment.joinDate,
         status: editingEnrollment.status,
       });
     } else {
       setFormData({
         studentId: '',
         courseId: '',
-        joinDate: new Date().toISOString().split('T')[0],
         status: 'Active',
       });
     }
@@ -60,7 +57,6 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
       setFormData({
         studentId: '',
         courseId: '',
-        joinDate: new Date().toISOString().split('T')[0],
         status: 'Active',
       });
     }
@@ -106,17 +102,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
             ))}
           </select>
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('enrollments.join_date')}</label>
-          <input
-            type="date"
-            name="joinDate"
-            value={formData.joinDate}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all outline-none"
-          />
-        </div>
+
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('common.status')}</label>
           <select
@@ -129,7 +115,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
             <option value="Stopped">{t('common.stopped')}</option>
           </select>
         </div>
-        
+
         <div className="md:col-span-2 flex justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700 pt-6">
           {editingEnrollment && (
             <button

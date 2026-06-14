@@ -7,7 +7,10 @@ import { useStudentStore } from '../store/studentStore';
 
 const Students: React.FC = () => {
   const { t } = useTranslation();
-  const { students, addStudent, updateStudent, deleteStudent } = useStudentStore();
+  const studentsCount = useStudentStore((state) => state.students.length);
+  const addStudent = useStudentStore((state) => state.addStudent);
+  const updateStudent = useStudentStore((state) => state.updateStudent);
+  
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const handleAddOrUpdate = (input: StudentInput) => {
@@ -16,12 +19,6 @@ const Students: React.FC = () => {
       setEditingStudent(null);
     } else {
       addStudent(input);
-    }
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm(t('common.confirm_delete'))) {
-      deleteStudent(id);
     }
   };
 
@@ -50,14 +47,12 @@ const Students: React.FC = () => {
           <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
             {t('students.list_title')}
             <span className="ml-3 px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full rtl:mr-3 rtl:ml-0">
-              {students.length} {t('common.total')}
+              {studentsCount} {t('common.total')}
             </span>
           </h2>
         </div>
         <StudentTable
-          students={students}
           onEdit={handleEdit}
-          onDelete={handleDelete}
         />
       </div>
     </div>

@@ -13,13 +13,19 @@ i18n
       en: { translation: enTranslations },
       ar: { translation: arTranslations }
     },
-    fallbackLng: 'en',
+    fallbackLng: 'ar',
     interpolation: {
       escapeValue: false
     },
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage']
+    },
+    parseMissingKeyHandler: (key) => {
+      // reports.title -> Title
+      const parts = key.split('.');
+      const lastPart = parts[parts.length - 1];
+      return lastPart.charAt(0).toUpperCase() + lastPart.slice(1).replace(/_/g, ' ');
     }
   });
 

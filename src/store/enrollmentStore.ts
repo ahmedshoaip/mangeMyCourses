@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Enrollment } from '../types/enrollment';
+import type { Enrollment, EnrollmentInput } from '../types/enrollment';
 
 interface EnrollmentState {
   enrollments: Enrollment[];
-  addEnrollment: (enrollment: Omit<Enrollment, 'id'>) => void;
-  updateEnrollment: (id: string, updates: Partial<Omit<Enrollment, 'id'>>) => void;
+  addEnrollment: (enrollment: EnrollmentInput) => void;
+  updateEnrollment: (id: string, updates: Partial<EnrollmentInput>) => void;
   deleteEnrollment: (id: string) => void;
   getEnrollmentById: (id: string) => Enrollment | undefined;
 }
@@ -21,6 +21,7 @@ export const useEnrollmentStore = create<EnrollmentState>()(
             {
               ...enrollment,
               id: crypto.randomUUID(),
+              joinDate: new Date().toISOString().split('T')[0],
             },
           ],
         })),

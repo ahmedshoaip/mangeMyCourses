@@ -16,8 +16,8 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({
   onStop 
 }) => {
   const { t } = useTranslation();
-  const { students } = useStudentStore();
-  const { courses } = useCourseStore();
+  const students = useStudentStore((state) => state.students);
+  const courses = useCourseStore((state) => state.courses);
 
   const getStudentName = (id: string) => students.find(s => s.id === id)?.fullName || 'Unknown Student';
   const getCourseName = (id: string) => courses.find(c => c.id === id)?.courseName || 'Unknown Course';

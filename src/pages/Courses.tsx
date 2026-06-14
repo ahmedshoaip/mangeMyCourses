@@ -7,7 +7,10 @@ import { useCourseStore } from '../store/courseStore';
 
 const Courses: React.FC = () => {
   const { t } = useTranslation();
-  const { courses, addCourse, updateCourse, deleteCourse } = useCourseStore();
+  const addCourse = useCourseStore((state) => state.addCourse);
+  const updateCourse = useCourseStore((state) => state.updateCourse);
+  const courses = useCourseStore((state) => state.courses);
+
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | CourseStatus>('All');
@@ -27,12 +30,6 @@ const Courses: React.FC = () => {
       setEditingCourse(null);
     } else {
       addCourse(input);
-    }
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm(t('common.confirm_delete'))) {
-      deleteCourse(id);
     }
   };
 
@@ -107,7 +104,6 @@ const Courses: React.FC = () => {
           <CourseTable
             courses={filteredCourses}
             onEdit={handleEdit}
-            onDelete={handleDelete}
           />
         </div>
       </div>

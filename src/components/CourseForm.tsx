@@ -107,11 +107,10 @@ const CourseForm: React.FC<CourseFormProps> = ({ onSubmit, editingCourse, onCanc
                 key={day}
                 type="button"
                 onClick={() => handleDayToggle(day)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  formData.daysOfWeek.includes(day)
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${formData.daysOfWeek.includes(day)
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
+                  }`}
               >
                 {t(`days.${day}`)}
               </button>
@@ -166,7 +165,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ onSubmit, editingCourse, onCanc
             className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all"
           />
         </div>
-        
+
         <div className="md:col-span-2 flex justify-end gap-3 pt-2">
           {editingCourse && (
             <button

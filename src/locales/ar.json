@@ -4,6 +4,11 @@
     "students": "الطلاب",
     "courses": "الكورسات",
     "enrollments": "التسجيلات",
+    "attendance": "الحضور والغياب",
+    "payments": "المدفوعات",
+    "rent": "إيجار المكان",
+    "reports": "التقارير",
+    "settings": "الإعدادات",
     "actions": "الإجراءات",
     "edit": "تعديل",
     "delete": "حذف",
@@ -20,10 +25,64 @@
     "all": "الكل",
     "results": "نتائج",
     "total": "إجمالي",
+    "present": "حاضر",
+    "absent": "غائب",
+    "late": "متأخر",
+    "paid": "تم الدفع",
+    "unpaid": "لم يدفع",
+    "overdue": "متأخر",
+    "pending": "قيد الانتظار",
+    "absences": "الغيابات",
+    "amount": "المبلغ",
+    "date": "التاريخ",
+    "save": "حفظ",
+    "course": "الكورس",
+    "finance": "المالية",
     "footer_copy": "لوحة تحكم للتميز التعليمي",
     "confirm_delete": "هل أنت متأكد أنك تريد حذف هذا السجل؟",
     "confirm_stop": "هل أنت متأكد أنك تريد إيقاف هذا التسجيل؟",
     "no_results": "لم يتم العثور على نتائج."
+  },
+  "dashboard": {
+    "subtitle": "نظرة عامة على أداء المركز التعليمي الخاص بك.",
+    "profit_overview": "نظرة عامة على الأرباح",
+    "total_collected": "إجمالي المحصل",
+    "total_expenses": "إجمالي مصاريف الإيجار",
+    "net_profit": "صافي الربح",
+    "status_alerts": "تنبيهات الحالة",
+    "students_overdue": "طلاب لديهم مدفوعات متأخرة.",
+    "low_attendance": "نسبة الحضور العامة أقل من 80%.",
+    "high_pending": "حجم كبير من المدفوعات المعلقة.",
+    "no_alerts": "كل شيء يبدو رائعاً!",
+    "rent_expenses": "مصاريف شهرية"
+  },
+  "reports": {
+    "subtitle": "تصفية وإنشاء تقارير مفصلة لمركزك.",
+    "filter_type": "نوع التقرير"
+  },
+  "notifications": {
+    "title": "التنبيهات",
+    "clear_all": "مسح الكل",
+    "empty": "لا توجد تنبيهات جديدة",
+    "close": "إغلاق اللوحة"
+  },
+  "attendance": {
+    "log_title": "تسجيل الحضور",
+    "late_minutes": "دقائق التأخير"
+  },
+  "payments": {
+    "add_title": "إضافة طلب دفع",
+    "due_date": "تاريخ الاستحقاق"
+  },
+  "rent": {
+    "calculator_title": "حاسبة الإيجار",
+    "type": "نوع الإيجار",
+    "hourly": "بالساعة",
+    "monthly": "بالشهر",
+    "rate": "السعر",
+    "hours": "ساعات الاستخدام",
+    "total": "الإجمالي التقديري",
+    "add_record": "إضافة سجل"
   },
   "students": {
     "title": "إدارة الطلاب",

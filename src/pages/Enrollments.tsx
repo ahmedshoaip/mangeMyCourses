@@ -9,9 +9,11 @@ import { useCourseStore } from '../store/courseStore';
 
 const Enrollments: React.FC = () => {
   const { t } = useTranslation();
-  const { enrollments, addEnrollment, updateEnrollment } = useEnrollmentStore();
-  const { students } = useStudentStore();
-  const { courses } = useCourseStore();
+  const enrollments = useEnrollmentStore((state) => state.enrollments);
+  const addEnrollment = useEnrollmentStore((state) => state.addEnrollment);
+  const updateEnrollment = useEnrollmentStore((state) => state.updateEnrollment);
+  const students = useStudentStore((state) => state.students);
+  const courses = useCourseStore((state) => state.courses);
   
   const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(null);
   

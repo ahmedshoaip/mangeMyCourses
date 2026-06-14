@@ -8,4 +8,4 @@ export interface Enrollment {
   status: EnrollmentStatus;
 }
 
-export type EnrollmentInput = Omit<Enrollment, 'id'>;
+export type EnrollmentInput = Omit<Enrollment, 'id' | 'joinDate'>;
