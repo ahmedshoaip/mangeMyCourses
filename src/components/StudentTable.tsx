@@ -16,7 +16,10 @@ const StudentTable: React.FC<StudentTableProps> = ({ onEdit }) => {
 
   const handleDelete = (id: string) => {
     if (confirm(t('common.confirm_delete'))) {
-      deleteStudent(id);
+      const { success, message } = deleteStudent(id);
+      if (!success) {
+        alert(message);
+      }
     }
   };
 

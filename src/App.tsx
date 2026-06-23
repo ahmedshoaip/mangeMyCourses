@@ -6,8 +6,7 @@ import Enrollments from './pages/Enrollments';
 import Dashboard from './pages/Dashboard';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
-import AttendanceForm from './components/AttendanceForm';
-import AttendanceTable from './components/AttendanceTable';
+import AttendancePage from './pages/Attendance';
 import PaymentForm from './components/PaymentForm';
 import PaymentTable from './components/PaymentTable';
 import RentCalculator from './components/RentCalculator';
@@ -99,12 +98,7 @@ function App() {
           {activeModule === 'Students' && <Students />}
           {activeModule === 'Courses' && <Courses />}
           {activeModule === 'Enrollments' && <Enrollments />}
-          {activeModule === 'Attendance' && (
-            <div className="space-y-8 animate-in zoom-in duration-300">
-              <AttendanceForm />
-              <AttendanceTable />
-            </div>
-          )}
+          {activeModule === 'Attendance' && <AttendancePage />}
           {activeModule === 'Payments' && (
             <div className="space-y-8 animate-in zoom-in duration-300">
               <PaymentForm />

@@ -2,14 +2,21 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAttendanceStore } from '../store/attendanceStore';
 import { useStudentStore } from '../store/studentStore';
+import { useCourseStore } from '../store/courseStore';
+import type { Attendance } from '../types/attendance';
 
-const AttendanceTable: React.FC = () => {
+interface AttendanceTableProps {
+  records: Attendance[];
+}
+
+const AttendanceTable: React.FC<AttendanceTableProps> = ({ records }) => {
   const { t } = useTranslation();
-  const records = useAttendanceStore((state) => state.records);
   const deleteRecord = useAttendanceStore((state) => state.deleteRecord);
   const students = useStudentStore((state) => state.students);
+  const courses = useCourseStore((state) => state.courses);
 
   const getStudentName = (id: string) => students.find(s => s.id === id)?.fullName || 'Unknown';
+  const getCourseName = (id: string) => courses.find(c => c.id === id)?.courseName || 'Unknown';
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
@@ -18,6 +25,7 @@ const AttendanceTable: React.FC = () => {
           <thead>
             <tr className="bg-gray-50/50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
               <th className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">{t('common.student')}</th>
+              <th className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">{t('common.course', 'Course')}</th>
               <th className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">{t('common.date')}</th>
               <th className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">{t('common.status')}</th>
               <th className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">{t('common.notes')}</th>
@@ -27,12 +35,13 @@ const AttendanceTable: React.FC = () => {
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {records.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">{t('common.no_results')}</td>
+                <td colSpan={6} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">{t('common.no_results')}</td>
               </tr>
             ) : (
               records.map((record) => (
                 <tr key={record.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{getStudentName(record.studentId)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{getCourseName(record.courseId)}</td>
                   <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{record.date}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
@@ -61,3 +70,4 @@ const AttendanceTable: React.FC = () => {
 };
 
 export default AttendanceTable;
+

@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Student } from '../types/student';
+import { useAttendanceStore } from './attendanceStore';
 
 interface StudentState {
   students: Student[];
   addStudent: (student: Omit<Student, 'id' | 'createdDate'>) => void;
   updateStudent: (id: string, updates: Partial<Omit<Student, 'id'>>) => void;
-  deleteStudent: (id: string) => void;
+  deleteStudent: (id: string) => { success: boolean; message?: string };
   getStudentById: (id: string) => Student | undefined;
 }
 
@@ -50,10 +51,21 @@ export const useStudentStore = create<StudentState>()(
             s.id === id ? { ...s, ...updates } : s
           ),
         })),
-      deleteStudent: (id) =>
+      deleteStudent: (id) => {
+        // Rule 10: Check attendance
+        const attendanceRecords = useAttendanceStore.getState().records;
+        const hasAttendance = attendanceRecords.some(r => r.studentId === id);
+
+        if (hasAttendance) {
+          return { success: false, message: 'لا يمكن حذف هذا الطالب لوجود سجلات حضور مرتبطة به' };
+        }
+
         set((state) => ({
           students: state.students.filter((s) => s.id !== id),
-        })),
+        }));
+        
+        return { success: true };
+      },
       getStudentById: (id) => get().students.find((s) => s.id === id),
     }),
     {
@@ -61,3 +73,4 @@ export const useStudentStore = create<StudentState>()(
     }
   )
 );
+

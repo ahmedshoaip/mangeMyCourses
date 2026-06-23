@@ -3,6 +3,7 @@ export type AttendanceStatus = 'present' | 'absent' | 'late';
 export interface Attendance {
   id: string;
   studentId: string;
+  courseId: string;
   date: string;
   status: AttendanceStatus;
   lateMinutes?: number;

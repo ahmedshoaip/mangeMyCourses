@@ -4,9 +4,16 @@ import { useAttendanceStore } from '../store/attendanceStore';
 import { useNotificationStore } from '../store/notificationStore';
 
 export const useNotificationGenerator = () => {
-  const payments = usePaymentStore(state => state.payments);
-  const attendance = useAttendanceStore(state => state.records);
-  const { notifications, addNotification } = useNotificationStore();
+const payments = usePaymentStore((state) => state.payments);
+const attendance = useAttendanceStore((state) => state.records);
+
+const notifications = useNotificationStore(
+ (state) => state.notifications
+);
+
+const addNotification = useNotificationStore(
+ (state) => state.addNotification
+);
 
   useEffect(() => {
     // 1. Check for Overdue Payments
@@ -44,5 +51,5 @@ export const useNotificationGenerator = () => {
         }
       }
     });
-  }, [payments, attendance, notifications, addNotification]);
+  }, [payments, attendance]);
 };
