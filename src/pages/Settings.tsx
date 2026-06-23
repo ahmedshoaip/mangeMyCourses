@@ -3,12 +3,23 @@ import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../store/settingsStore';
 import { SectionHeader } from '../components/Widgets';
 import { exportBackup } from '../utils/backup/exportBackup';
+import { validateBackup } from '../utils/backup/validateBackup';
+import { restoreBackup } from '../utils/backup/importBackup';
+import type { AppBackup } from '../utils/backup/backup.types';
+
 
 
 const Settings: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { theme, setTheme, resetSettings } = useSettingsStore();
-  const [showToast, setShowToast] = React.useState(false);
+  const [showToast, setShowToast] = React.useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
+  const [pendingBackup, setPendingBackup] = React.useState<AppBackup | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   
   const changeLanguage = (lng: 'ar' | 'en') => {
     i18n.changeLanguage(lng);
@@ -16,9 +27,45 @@ const Settings: React.FC = () => {
 
   const handleExport = () => {
     exportBackup();
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+    setShowToast({ show: true, message: 'تم إنشاء النسخة الاحتياطية بنجاح', type: 'success' });
+    setTimeout(() => setShowToast(prev => ({ ...prev, show: false })), 3000);
   };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        if (validateBackup(json)) {
+          setPendingBackup(json);
+        } else {
+          setShowToast({ show: true, message: 'ملف غير صالح أو بيانات ناقصة', type: 'error' });
+          setTimeout(() => setShowToast(prev => ({ ...prev, show: false })), 3000);
+        }
+      } catch (error) {
+        setShowToast({ show: true, message: 'خطأ في قراءة ملف JSON', type: 'error' });
+        setTimeout(() => setShowToast(prev => ({ ...prev, show: false })), 3000);
+      }
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.readAsText(file);
+  };
+
+  const confirmRestore = () => {
+    if (!pendingBackup) return;
+    restoreBackup(pendingBackup);
+    setPendingBackup(null);
+    setShowToast({ show: true, message: 'تم استرجاع النسخة الاحتياطية', type: 'success' });
+    
+    setTimeout(() => {
+      window.location.reload();
+    }, 1200);
+  };
+
 
   const handleFullReset = () => {
     if (confirm(t('settings.confirm_reset_data', 'This will delete ALL data (Students, Courses, Payments). Are you sure?'))) {
@@ -127,24 +174,107 @@ const Settings: React.FC = () => {
         <p className="text-gray-600 dark:text-gray-400 mb-6">
           {t('settings.backup_description', 'Export your data to a JSON file for safekeeping.')}
         </p>
-        <button 
-          onClick={handleExport}
-          className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02] flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-          تصدير نسخة احتياطية
-        </button>
+        <div className="flex flex-wrap gap-4">
+          <button 
+            onClick={handleExport}
+            className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02] flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            تصدير نسخة احتياطية
+          </button>
+
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="px-8 py-3 bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 border-2 border-indigo-600 dark:border-indigo-500 font-bold rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-600 transition-all hover:scale-[1.02] flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+            استيراد نسخة احتياطية
+          </button>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            accept=".json" 
+            className="hidden" 
+          />
+        </div>
       </div>
 
-      {/* Toast Notification */}
-      {showToast && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="bg-green-600 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-bold">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-            تم إنشاء النسخة الاحتياطية بنجاح
+      {/* Confirmation Modal */}
+      {pendingBackup && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full p-8 border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-300">
+            <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">ملخص النسخة الاحتياطية</h3>
+            
+            <div className="space-y-3 mb-8">
+              <div className="flex justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <span className="text-gray-500 dark:text-gray-400">عدد الطلاب</span>
+                <span className="font-bold">{pendingBackup.data.students.length}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <span className="text-gray-500 dark:text-gray-400">عدد الكورسات</span>
+                <span className="font-bold">{pendingBackup.data.courses.length}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <span className="text-gray-500 dark:text-gray-400">عدد التسجيلات</span>
+                <span className="font-bold">{pendingBackup.data.enrollments.length}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <span className="text-gray-500 dark:text-gray-400">عدد الحضور</span>
+                <span className="font-bold">{pendingBackup.data.attendance.length}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <span className="text-gray-500 dark:text-gray-400">عدد المدفوعات</span>
+                <span className="font-bold">{pendingBackup.data.payments.length}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <span className="text-gray-500 dark:text-gray-400">عدد الإيجارات</span>
+                <span className="font-bold">{pendingBackup.data.rent.length}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl text-indigo-700 dark:text-indigo-300">
+                <span>تاريخ الإنشاء</span>
+                <span className="font-bold">{new Date(pendingBackup.metadata.createdAt).toLocaleString('ar-EG')}</span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-2xl mb-8">
+              <p className="text-red-600 dark:text-red-400 font-bold text-center">
+                ⚠️ سيتم استبدال البيانات الحالية بالكامل
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button 
+                onClick={confirmRestore}
+                className="py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 dark:shadow-none"
+              >
+                استرجاع
+              </button>
+              <button 
+                onClick={() => setPendingBackup(null)}
+                className="py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+              >
+                إلغاء
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Toast Notification */}
+      {showToast.show && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[120] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className={`${showToast.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-bold`}>
+            {showToast.type === 'success' ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            )}
+            {showToast.message}
+          </div>
+        </div>
+      )}
+
     </div>
 
   );
