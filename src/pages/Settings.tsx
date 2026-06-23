@@ -2,13 +2,22 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../store/settingsStore';
 import { SectionHeader } from '../components/Widgets';
+import { exportBackup } from '../utils/backup/exportBackup';
+
 
 const Settings: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { theme, setTheme, resetSettings } = useSettingsStore();
+  const [showToast, setShowToast] = React.useState(false);
   
   const changeLanguage = (lng: 'ar' | 'en') => {
     i18n.changeLanguage(lng);
+  };
+
+  const handleExport = () => {
+    exportBackup();
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   const handleFullReset = () => {
@@ -17,6 +26,7 @@ const Settings: React.FC = () => {
       window.location.reload();
     }
   };
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in slide-in-from-right duration-500">
@@ -107,7 +117,36 @@ const Settings: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Backup Section */}
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-indigo-100 dark:border-indigo-900/30 mt-8">
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+          {t('settings.backup_title', 'Data Backup')}
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          {t('settings.backup_description', 'Export your data to a JSON file for safekeeping.')}
+        </p>
+        <button 
+          onClick={handleExport}
+          className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02] flex items-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+          تصدير نسخة احتياطية
+        </button>
+      </div>
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-green-600 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-bold">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+            تم إنشاء النسخة الاحتياطية بنجاح
+          </div>
+        </div>
+      )}
     </div>
+
   );
 };
 
