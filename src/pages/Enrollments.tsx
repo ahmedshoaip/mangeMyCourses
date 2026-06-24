@@ -34,12 +34,14 @@ const Enrollments: React.FC = () => {
 
   const handleAddOrUpdate = (input: EnrollmentInput) => {
     if (editingEnrollment) {
-      updateEnrollment(editingEnrollment.id, input);
-      setEditingEnrollment(null);
+      const result = updateEnrollment(editingEnrollment.id, input);
+      if (editingEnrollment) setEditingEnrollment(null);
+      return result;
     } else {
-      addEnrollment(input);
+      return addEnrollment(input);
     }
   };
+
 
   const handleStop = (id: string) => {
     if (confirm(t('common.confirm_stop'))) {

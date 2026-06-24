@@ -15,12 +15,14 @@ const Students: React.FC = () => {
 
   const handleAddOrUpdate = (input: StudentInput) => {
     if (editingStudent) {
-      updateStudent(editingStudent.id, input);
-      setEditingStudent(null);
+      const result = updateStudent(editingStudent.id, input);
+      if (result.success) setEditingStudent(null);
+      return result;
     } else {
-      addStudent(input);
+      return addStudent(input);
     }
   };
+
 
   const handleEdit = (student: Student) => {
     setEditingStudent(student);

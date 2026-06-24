@@ -2,11 +2,15 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Course } from '../types/course';
 import { useAttendanceStore } from './attendanceStore';
+import { courseSchema } from '../validation';
+
 
 interface CourseState {
   courses: Course[];
-  addCourse: (course: Omit<Course, 'id' | 'createdDate'>) => void;
-  updateCourse: (id: string, updates: Partial<Omit<Course, 'id'>>) => void;
+  addCourse: (course: Omit<Course, 'id' | 'createdDate'>) => { success: boolean; message?: string };
+  updateCourse: (id: string, updates: Partial<Omit<Course, 'id'>>) => { success: boolean; message?: string };
+
+
   deleteCourse: (id: string) => { success: boolean; message?: string };
   getCourseById: (id: string) => Course | undefined;
 }
@@ -40,23 +44,50 @@ export const useCourseStore = create<CourseState>()(
   persist(
     (set, get) => ({
       courses: initialCourses,
-      addCourse: (course) =>
+      addCourse: (course) => {
+        // 1. Validation
+        const validation = courseSchema.safeParse(course);
+        if (!validation.success) {
+          return { success: false, message: validation.error.issues[0].message };
+        }
+
+        const normalized = validation.data as Omit<Course, 'id' | 'createdDate'>;
+
         set((state) => ({
           courses: [
             ...state.courses,
             {
-              ...course,
+              ...normalized,
               id: crypto.randomUUID(),
               createdDate: new Date().toISOString().split('T')[0],
             },
           ],
-        })),
-      updateCourse: (id, updates) =>
-        set((state) => ({
-          courses: state.courses.map((c) =>
-            c.id === id ? { ...c, ...updates } : c
-          ),
-        })),
+        }));
+        return { success: true };
+      },
+
+  updateCourse: (id, updates) => {
+    // 1. Partial Validation
+    const existing = get().courses.find(c => c.id === id);
+    if (!existing) return { success: false, message: 'الكورس غير موجود' };
+
+    const merged = { ...existing, ...updates };
+    const validation = courseSchema.safeParse(merged);
+
+    if (!validation.success) {
+      return { success: false, message: validation.error.issues[0].message };
+    }
+
+    const normalized = validation.data;
+
+    set((state) => ({
+      courses: state.courses.map((c) =>
+        c.id === id ? { ...c, ...normalized } : c
+      ),
+    }));
+    return { success: true };
+  },
+
       deleteCourse: (id) => {
         // Rule 10: Check attendance
         const attendanceRecords = useAttendanceStore.getState().records;

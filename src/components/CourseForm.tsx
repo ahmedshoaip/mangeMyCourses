@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CourseInput, Course } from '../types/course';
+import { courseSchema } from '../validation';
 
 interface CourseFormProps {
-  onSubmit: (course: CourseInput) => void;
+  onSubmit: (course: CourseInput) => { success: boolean; message?: string } | void;
   editingCourse: Course | null;
   onCancel: () => void;
 }
@@ -20,6 +21,12 @@ const CourseForm: React.FC<CourseFormProps> = ({ onSubmit, editingCourse, onCanc
     endTime: '',
     description: '',
     status: 'Active',
+  });
+
+  const [showToast, setShowToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success'
   });
 
   useEffect(() => {
@@ -65,11 +72,41 @@ const CourseForm: React.FC<CourseFormProps> = ({ onSubmit, editingCourse, onCanc
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // 1. Zod Validation
+    const validation = courseSchema.safeParse(formData);
+    if (!validation.success) {
+      setShowToast({ show: true, message: validation.error.issues[0].message, type: 'error' });
+      setTimeout(() => setShowToast(prev => ({ ...prev, show: false })), 3000);
+      return;
+    }
+
+    // 2. Parent Submit
+    const result = onSubmit(validation.data as CourseInput);
+
+    // 3. Handle Store Result
+    if (result && !result.success) {
+      setShowToast({ show: true, message: result.message || 'Error', type: 'error' });
+      setTimeout(() => setShowToast(prev => ({ ...prev, show: false })), 3000);
+      return;
+    }
+
+    // Success
+    if (!editingCourse) {
+      setFormData({
+        courseName: '',
+        monthlyPrice: 0,
+        daysOfWeek: [],
+        startTime: '',
+        endTime: '',
+        description: '',
+        status: 'Active',
+      });
+    }
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-8 transition-all duration-300">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-8 transition-all duration-300 relative">
       <h2 className="text-xl font-semibold mb-6 text-gray-800 dark:text-gray-100">
         {editingCourse ? t('courses.edit_title') : t('courses.add_title')}
       </h2>
@@ -81,7 +118,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ onSubmit, editingCourse, onCanc
             name="courseName"
             value={formData.courseName}
             onChange={handleChange}
-            required
             placeholder={t('courses.placeholder_name')}
             className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all"
           />
@@ -93,7 +129,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ onSubmit, editingCourse, onCanc
             name="monthlyPrice"
             value={formData.monthlyPrice}
             onChange={handleChange}
-            required
             min="0"
             className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all"
           />
@@ -125,7 +160,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ onSubmit, editingCourse, onCanc
             name="startTime"
             value={formData.startTime}
             onChange={handleChange}
-            required
             className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all"
           />
         </div>
@@ -136,7 +170,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ onSubmit, editingCourse, onCanc
             name="endTime"
             value={formData.endTime}
             onChange={handleChange}
-            required
             className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all"
           />
         </div>
@@ -184,6 +217,20 @@ const CourseForm: React.FC<CourseFormProps> = ({ onSubmit, editingCourse, onCanc
           </button>
         </div>
       </form>
+
+      {/* Local Toast System */}
+      {showToast.show && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[120] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className={`${showToast.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-bold`}>
+            {showToast.type === 'success' ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            )}
+            {showToast.message}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

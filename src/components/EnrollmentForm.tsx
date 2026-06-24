@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import type { EnrollmentInput, Enrollment } from '../types/enrollment';
 import { useStudentStore } from '../store/studentStore';
 import { useCourseStore } from '../store/courseStore';
+import { enrollmentSchema } from '../validation';
 
 interface EnrollmentFormProps {
-  onSubmit: (enrollment: EnrollmentInput) => void;
+  onSubmit: (enrollment: EnrollmentInput) => { success: boolean; message?: string } | void;
   editingEnrollment: Enrollment | null;
   onCancel: () => void;
 }
@@ -23,6 +24,12 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
     studentId: '',
     courseId: '',
     status: 'Active',
+  });
+
+  const [showToast, setShowToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success'
   });
 
   useEffect(() => {
@@ -48,11 +55,26 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.studentId || !formData.courseId) {
-      alert('Please select both a student and a course.');
+    
+    // 1. Zod Validation
+    const validation = enrollmentSchema.safeParse(formData);
+    if (!validation.success) {
+      setShowToast({ show: true, message: validation.error.issues[0].message, type: 'error' });
+      setTimeout(() => setShowToast(prev => ({ ...prev, show: false })), 3000);
       return;
     }
-    onSubmit(formData);
+
+    // 2. Parent Submit
+    const result = onSubmit(validation.data as EnrollmentInput);
+
+    // 3. Store Result (Business Rules)
+    if (result && !result.success) {
+      setShowToast({ show: true, message: result.message || 'Error', type: 'error' });
+      setTimeout(() => setShowToast(prev => ({ ...prev, show: false })), 3000);
+      return;
+    }
+
+    // Success
     if (!editingEnrollment) {
       setFormData({
         studentId: '',
@@ -63,7 +85,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-8 transition-all duration-300">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-8 transition-all duration-300 relative">
       <h2 className="text-xl font-semibold mb-6 text-gray-800 dark:text-gray-100 flex items-center gap-2">
         <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -77,7 +99,6 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
             name="studentId"
             value={formData.studentId}
             onChange={handleChange}
-            required
             disabled={!!editingEnrollment}
             className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed outline-none"
           >
@@ -93,12 +114,11 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
             name="courseId"
             value={formData.courseId}
             onChange={handleChange}
-            required
             className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all outline-none"
           >
             <option value="">{t('enrollments.choose_course')}</option>
             {courses.map((c) => (
-              <option key={c.id} value={c.id}>{c.courseName} - ${c.monthlyPrice}/mo</option>
+              <option key={c.id} value={c.id}>{c.courseName} - {c.monthlyPrice} ج.م</option>
             ))}
           </select>
         </div>
@@ -134,6 +154,20 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
           </button>
         </div>
       </form>
+
+      {/* Local Toast System */}
+      {showToast.show && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[120] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className={`${showToast.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-bold`}>
+            {showToast.type === 'success' ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            )}
+            {showToast.message}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

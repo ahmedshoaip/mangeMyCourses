@@ -26,12 +26,15 @@ const Courses: React.FC = () => {
 
   const handleAddOrUpdate = (input: CourseInput) => {
     if (editingCourse) {
-      updateCourse(editingCourse.id, input);
-      setEditingCourse(null);
+      const result = updateCourse(editingCourse.id, input);
+      // Note: updateCourse currently returns void, I'll update it to match addCourse.
+      if (editingCourse) setEditingCourse(null);
+      return result;
     } else {
-      addCourse(input);
+      return addCourse(input);
     }
   };
+
 
   const handleEdit = (course: Course) => {
     setEditingCourse(course);
