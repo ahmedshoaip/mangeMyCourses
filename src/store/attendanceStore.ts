@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Attendance, AttendanceInput } from '../types/attendance';
+import { attendanceSchema } from '../validation';
+
 
 interface AttendanceState {
   records: Attendance[];
   addRecord: (record: AttendanceInput) => { success: boolean; message?: string };
-  updateRecord: (id: string, updates: Partial<AttendanceInput>) => void;
+  updateRecord: (id: string, updates: Partial<AttendanceInput>) => { success: boolean; message?: string };
+
   deleteRecord: (id: string) => void;
   getRecordsByStudent: (studentId: string) => Attendance[];
   getRecordsByCourseAndDate: (courseId: string, date: string) => Attendance[];
@@ -16,35 +19,70 @@ export const useAttendanceStore = create<AttendanceState>()(
     (set, get) => ({
       records: [],
       addRecord: (record) => {
+        // 1. Validation
+        const validation = attendanceSchema.safeParse(record);
+        if (!validation.success) {
+          return { success: false, message: validation.error.issues[0].message };
+        }
+
         const { records } = get();
-        // Rule 3: Prevent duplicate (studentId + courseId + date)
+        const normalized = validation.data;
+
+        // 2. Business Rule: Unique (student + course + date)
         const isDuplicate = records.some(
-          (r) => r.studentId === record.studentId && 
-                 r.courseId === record.courseId && 
-                 r.date === record.date
+          (r) => r.studentId === normalized.studentId && 
+                 r.courseId === normalized.courseId && 
+                 r.date === normalized.date
         );
 
         if (isDuplicate) {
-          return { success: false, message: 'هذا الطالب مسجل حضوره بالفعل لهذا الكورس في هذا اليوم' };
+          return { success: false, message: 'تم تسجيل الحضور لهذا الطالب مسبقاً' };
         }
 
-        // Rule 5: lateMinutes logic
-        const finalRecord: Attendance = {
-          ...record,
-          id: crypto.randomUUID(),
-          lateMinutes: record.status === 'late' ? record.lateMinutes : undefined,
-        };
-
         set((state) => ({
-          records: [...state.records, finalRecord]
+          records: [
+            ...state.records,
+            {
+              ...normalized,
+              id: crypto.randomUUID(),
+            } as Attendance,
+          ]
         }));
 
         return { success: true };
       },
-      updateRecord: (id, updates) =>
+      updateRecord: (id, updates) => {
+        const existing = get().records.find(r => r.id === id);
+        if (!existing) return { success: false, message: 'السجل غير موجود' };
+
+        const merged = { ...existing, ...updates };
+        const validation = attendanceSchema.safeParse(merged);
+        
+        if (!validation.success) {
+          return { success: false, message: validation.error.issues[0].message };
+        }
+
+        const normalized = validation.data;
+
+        // Business Rule for update
+        const isDuplicate = get().records.some(
+          (r) => r.id !== id && 
+                 r.studentId === normalized.studentId && 
+                 r.courseId === normalized.courseId && 
+                 r.date === normalized.date
+        );
+
+        if (isDuplicate) {
+          return { success: false, message: 'تم تسجيل الحضور لهذا الطالب مسبقاً' };
+        }
+
         set((state) => ({
-          records: state.records.map((r) => r.id === id ? { ...r, ...updates } : r)
-        })),
+          records: state.records.map((r) => r.id === id ? { ...r, ...normalized } as Attendance : r)
+        }));
+        
+        return { success: true };
+      },
+
       deleteRecord: (id) =>
         set((state) => ({
           records: state.records.filter((r) => r.id !== id)

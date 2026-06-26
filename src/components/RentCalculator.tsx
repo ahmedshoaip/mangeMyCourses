@@ -3,12 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { useRentStore } from '../store/rentStore';
 import type { RentInput, RentType } from '../types/rent';
 import { formatCurrency } from '../utils/currency';
+import { rentSchema } from '../validation';
 
 const RentCalculator: React.FC = () => {
   const { t } = useTranslation();
   const records = useRentStore((state) => state.records);
   const addRecord = useRentStore((state) => state.addRecord);
   const deleteRecord = useRentStore((state) => state.deleteRecord);
+
+  const [showToast, setShowToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
 
   const [formData, setFormData] = useState<RentInput>({
     rentType: 'hourly',
@@ -19,20 +26,35 @@ const RentCalculator: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.rate <= 0) return;
-    addRecord(formData);
-    setFormData({ ...formData, rate: 0, usageHours: 0 });
+    
+    // 1. Zod Validation
+    const validation = rentSchema.safeParse(formData);
+    if (!validation.success) {
+      setShowToast({ show: true, message: validation.error.issues[0].message, type: 'error' });
+      setTimeout(() => setShowToast(prev => ({ ...prev, show: false })), 3000);
+      return;
+    }
+
+    // 2. Submit to Store
+    const { success, message } = addRecord(validation.data as RentInput);
+    if (success) {
+      setShowToast({ show: true, message: 'تم إضافة السجل بنجاح', type: 'success' });
+      setFormData({ ...formData, rate: 0, usageHours: 0 });
+    } else {
+      setShowToast({ show: true, message: message || 'حدث خطأ', type: 'error' });
+    }
+    setTimeout(() => setShowToast(prev => ({ ...prev, show: false })), 3000);
   };
 
   const currentTotal = formData.rentType === 'hourly' ? (formData.rate * (formData.usageHours || 0)) : formData.rate;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
         <h2 className="text-xl font-semibold mb-6 text-gray-800 dark:text-gray-100">{t('rent.calculator_title', 'Rent Calculator')}</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 uppercase">{t('rent.type', 'Rent Type')}</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('rent.type', 'Rent Type')}</label>
             <select
               value={formData.rentType}
               onChange={(e) => setFormData({ ...formData, rentType: e.target.value as RentType })}
@@ -44,19 +66,18 @@ const RentCalculator: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 uppercase">{t('rent.rate', 'Rate')}</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('rent.rate', 'Rate')}</label>
             <input
               type="number"
               value={formData.rate}
               onChange={(e) => setFormData({ ...formData, rate: Number(e.target.value) })}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white outline-none"
-              required
             />
           </div>
 
           {formData.rentType === 'hourly' && (
             <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-500 uppercase">{t('rent.hours', 'Usage Hours')}</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('rent.hours', 'Usage Hours')}</label>
               <input
                 type="number"
                 value={formData.usageHours}
@@ -67,13 +88,12 @@ const RentCalculator: React.FC = () => {
           )}
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 uppercase">{t('common.date')}</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('common.date')}</label>
             <input
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white outline-none"
-              required
             />
           </div>
 
@@ -116,6 +136,20 @@ const RentCalculator: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Toast Notification */}
+      {showToast.show && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[120] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className={`${showToast.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-bold`}>
+            {showToast.type === 'success' ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            )}
+            {showToast.message}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
