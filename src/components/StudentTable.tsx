@@ -6,22 +6,14 @@ import { useAttendanceStore } from '../store/attendanceStore';
 
 interface StudentTableProps {
   onEdit: (student: Student) => void;
+  onDelete: (id: string) => void;
 }
 
-const StudentTable: React.FC<StudentTableProps> = ({ onEdit }) => {
+const StudentTable: React.FC<StudentTableProps> = ({ onEdit, onDelete }) => {
   const { t } = useTranslation();
   const students = useStudentStore((state) => state.students);
-  const deleteStudent = useStudentStore((state) => state.deleteStudent);
   const attendanceRecords = useAttendanceStore((state) => state.records);
 
-  const handleDelete = (id: string) => {
-    if (confirm(t('common.confirm_delete'))) {
-      const { success, message } = deleteStudent(id);
-      if (!success) {
-        alert(message);
-      }
-    }
-  };
 
   const getStats = (studentId: string) => {
     const studentRecords = attendanceRecords.filter(r => r.studentId === studentId);
@@ -94,7 +86,7 @@ const StudentTable: React.FC<StudentTableProps> = ({ onEdit }) => {
                           </svg>
                         </button>
                         <button
-                          onClick={() => handleDelete(student.id)}
+                          onClick={() => onDelete(student.id)}
                           className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                           title={t('common.delete')}
                         >

@@ -2,25 +2,17 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Course } from '../types/course';
 import { formatCurrency } from '../utils/formatters';
-import { useCourseStore } from '../store/courseStore';
+
 
 interface CourseTableProps {
   courses: Course[];
   onEdit: (course: Course) => void;
+  onDelete: (id: string) => void;
 }
 
-const CourseTable: React.FC<CourseTableProps> = ({ courses, onEdit }) => {
+const CourseTable: React.FC<CourseTableProps> = ({ courses, onEdit, onDelete }) => {
   const { t } = useTranslation();
-  const deleteCourse = useCourseStore((state) => state.deleteCourse);
 
-  const handleDelete = (id: string) => {
-    if (confirm(t('common.confirm_delete'))) {
-      const { success, message } = deleteCourse(id);
-      if (!success) {
-        alert(message);
-      }
-    }
-  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
@@ -86,7 +78,7 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onEdit }) => {
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleDelete(course.id)}
+                        onClick={() => onDelete(course.id)}
                         className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                         title={t('common.delete')}
                       >
